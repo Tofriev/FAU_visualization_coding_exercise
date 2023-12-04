@@ -159,7 +159,7 @@
 
 			// TODO 2.x: remove width and height. Add a new parameter for the world atlas. You can immediately extract the two componentes from world atlas by doing:
 			// {worldAtlas: {land, interiors}}
-			const WorldGraticule = ({width, height}) => (
+			const WorldGraticule = () => (
 				// TODO 4.2: Memoization for sphere and graticules
 
 				// why does this work without return ?!
@@ -171,7 +171,6 @@
 						// TODO 1.5: draw the graticule by creating a path element similar to what you did before
 						<path className="graticule" d={path(graticule())} />
 					</>
-					
 				</g>
 			);
 
@@ -373,7 +372,7 @@
                         <svg width={width} height={height}>
 							
 							// TODO 1.5: remove width and height from the world graticule component
-							<WorldGraticule width={width} height={height}/>
+							<WorldGraticule/>
 							// TODO 2.1: add the countries element and pass it the world Atlas
 							// TODO 2.2: add the Bubbles element and pass it the data
 							// TODO 4.1: Pass the filtered data to bubbles
