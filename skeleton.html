@@ -111,8 +111,19 @@
 			}; 
 			
 			// the URL where the missing migrants data is downloaded from
-			const csvUrl = 'https://gist.githubusercontent.com/curran/a9656d711a8ad31d812b8f9963ac441c/raw/MissingMigrants-Global-2019-10-08T09-47-14-subset.csv';
+			//data for 2019
+			//const csvUrl = 'https://gist.githubusercontent.com/curran/a9656d711a8ad31d812b8f9963ac441c/raw/MissingMigrants-Global-2019-10-08T09-47-14-subset.csv';
 			
+			//data for 2021
+			//const csvUrl = 'https://gist.githubusercontent.com/Tofriev/f9caa19b33010ba79fe8fec2971beb12/raw/MissingMigrants_2021.csv';
+
+			//data for 2023
+			//const csvUrl = 'https://gist.githubusercontent.com/Tofriev/06374b71092d100909e89364ac8984be/raw/MissingMigrants_2023.csv';
+			
+			// data for 2019, 2021, 2023
+			const csvUrl = 'https://gist.githubusercontent.com/Tofriev/6b2b5da2b2f509e4154f255edeb72369/raw/MissingMigrants_2019_2021_2023.csv';
+			
+
 			// --------------------------------------------------
 			// TODO 1.3 (Data Loading)
 			// --------------------------------------------------
@@ -139,6 +150,10 @@
 					// TODO 1.3: row accessor will be the row function we defined above.
 					// executes the row function and then writes the results to data 
 					d3.csv(csvUrl, row).then(setData)
+
+				
+			
+					
 				},[]);
 				// TODO 1.3: return the dataa
 				return data;
@@ -183,15 +198,33 @@
 				worldAtlas: {land, interiors}, 
 			}) => 
 			(
-				// TODO 2.1: delete the following line
-				<div>Placeholder</div>
+				
 				// TODO 4.2: Memoization for land and interiors
 				// TODO 2.1: create a group with class name countries for styling that wraps the following JS scope
+				<g className="countries">
 					// TODO 2.1: enter a JS scope inside the group element (everything that follows will be in curly braces)
+					{
 						// TODO 2.1: create a react fragment
+						<>
 							// TODO 2.1: inside the fragment enter another JS scope
+							{
 								// TODO 2.1: map the land features to path elements that draw the land masses (styling will make sure the paths are filled with the correct color)
-							// TODO: 2.1: draw another path for the interiors
+								// probably an array of features (?) therefore we have to iterate over it 
+								land.features.map((land) => (
+                        		<path d={path(land)} className="land" />
+                   				 ))
+							}
+							
+							
+								// TODO: 2.1: draw another path for the interiors
+								<path d={path(interiors)} className="interiors" />
+							
+						</>	
+					}
+				</g>
+
+
+					
 			);
 
 			// --------------------------------------------------
@@ -199,7 +232,7 @@
 			// --------------------------------------------------
 
 			// TODO 2.2: define a function that accesses the number of dead and missing migrants from the data set called sizeValue
-			//const sizeValue =;
+			const sizeValue = (d) => Number(d["Total Dead and Missing"]);
 			// defines the maximum radius of a bubble
 			const maxRadius = 15;
 
@@ -209,24 +242,41 @@
 				
 				// TODO 4.2: Memoization for size scale
 				// TODO 2.2: the area covered by a bubble should be scaled proportional to the sizeValue. define a sizeScale using d3.scaleSqrt or d3.scaleLinear (think about which one is a better fit)
-				//const sizeScale = 
+				// of course we use the Sqrt because circles do no scale linear (linearity trap). we want to scale the are of the bubble and not the radius.
+				// linear scaling would scew our proportionality od the squared radious 
+				const sizeScale = d3.scaleSqrt()
 					// TODO 2.2: set the domain to the scale using the .domain function. the domain should start at zero and end at the maximum of the data (use sizeValue)
+					// domain is the complete set of values,
+					.domain([0, d3.max(data, sizeValue)])
 					// TODO 2.2: set the domain to the scale using the .range function. the range should start at zero and end at maxRadius
-
+					// range is the set of resulting values of a function
+					.range([0, maxRadius]);
 				// TODO 2.2: return the bubbles svg definition
 				return (
 					// TODO 2.2 wrap everything that follows in a group element with className bubbleMarks
-						// TODO 2.2: enter a JS scope
-							// TODO 2.2: map the data to get each row and index
-								// TODO 2.2: use the projection to get the x and y coordinates from the coords
-								// TODO 2.2: return a circle with the key being the index, x and y the extracted coordinates and the radius passed through the sizeScale
-					// TODO 2.2: delete the following line
-					<div>Placeholder</div>
+					<g className="bubbleMarks">
+								// TODO 2.2: enter a JS scope
+								{
+								// TODO 2.2: map the data to get each row and index
+									// iterate over data array, d is an element of data 
+                					data.map((d) => {
+                    					// TODO 2.2: use the projection to get the x and y coordinates from the coords
+                    					const coords = d["Location Coordinates"].split(",");
+										// projection converts goegraphical coordinates int 'screeen coordinates' ?
+                    					const [x, y] = projection([Number(coords[1]), Number(coords[0])]);
+
+										// TODO 2.2: return a circle with the key being the index, x and y the extracted coordinates and the radius passed through the sizeScale
+                   						// x and y coordinates of the circle center 
+										return <circle cx={x} cy={y} r={sizeScale(sizeValue(d))} />;
+                					})
+           						}
+					</g>
 				);
 			};
 
 			
 			const Introduction = ({width, height}) => {
+
 
 				const introText = "Hi there! Your data has "+width+" columns and "+height+" rows.";
 
@@ -348,9 +398,7 @@
 				
 				// read world atlas data amd migrant data
 				const worldAtlas = useWorldAtlas();
-				const data = useData();
-				// TODO 1.3: if the data was not loaded yet return an html element that indicates that the data is still loading.
-				
+				const data = useData();				
 				if (!data) {
 					return <div>Data is loading...</div>
 				}
@@ -374,7 +422,9 @@
 							// TODO 1.5: remove width and height from the world graticule component
 							<WorldGraticule/>
 							// TODO 2.1: add the countries element and pass it the world Atlas
+							<Countries worldAtlas={worldAtlas} />
 							// TODO 2.2: add the Bubbles element and pass it the data
+							<Bubbles data={data}/>
 							// TODO 4.1: Pass the filtered data to bubbles
                             <g transform={`translate(0, ${height - dateHistogramSize * height})`}>
 								// TODO 4.1: Pass the setter function of the brush extent to Histogram
